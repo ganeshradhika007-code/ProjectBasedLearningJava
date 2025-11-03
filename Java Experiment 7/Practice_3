@@ -1,0 +1,88 @@
+import java.sql.*;
+import java.util.*;
+
+class Student {
+    int id;
+    String name, dept;
+    double marks;
+    public Student(int id, String name, String dept, double marks) {
+        this.id = id; this.name = name; this.dept = dept; this.marks = marks;
+    }
+}
+
+class StudentController {
+    Connection con;
+    public StudentController() throws Exception {
+        String url = "jdbc:mysql://localhost:3306/your_database";
+        String user = "your_username";
+        String pass = "your_password";
+        Class.forName("com.mysql.cj.jdbc.Driver");
+        con = DriverManager.getConnection(url, user, pass);
+    }
+    public void insert(Student s) throws Exception {
+        PreparedStatement ps = con.prepareStatement("INSERT INTO Student VALUES (?, ?, ?, ?)");
+        ps.setInt(1, s.id); ps.setString(2, s.name); ps.setString(3, s.dept); ps.setDouble(4, s.marks);
+        ps.executeUpdate(); ps.close();
+    }
+    public List<Student> readAll() throws Exception {
+        List<Student> list = new ArrayList<>();
+        Statement st = con.createStatement();
+        ResultSet rs = st.executeQuery("SELECT * FROM Student");
+        while (rs.next())
+            list.add(new Student(rs.getInt(1), rs.getString(2), rs.getString(3), rs.getDouble(4)));
+        rs.close(); st.close();
+        return list;
+    }
+    public void update(Student s) throws Exception {
+        PreparedStatement ps = con.prepareStatement("UPDATE Student SET Name=?, Department=?, Marks=? WHERE StudentID=?");
+        ps.setString(1, s.name); ps.setString(2, s.dept); ps.setDouble(3, s.marks); ps.setInt(4, s.id);
+        ps.executeUpdate(); ps.close();
+    }
+    public void delete(int id) throws Exception {
+        PreparedStatement ps = con.prepareStatement("DELETE FROM Student WHERE StudentID=?");
+        ps.setInt(1, id); ps.executeUpdate(); ps.close();
+    }
+    public void close() throws Exception { con.close(); }
+}
+
+public class StudentManagementJDBC {
+    public static void main(String[] args) throws Exception {
+        Scanner sc = new Scanner(System.in);
+        StudentController ctrl = new StudentController();
+        while (true) {
+            System.out.println("1.Add 2.View 3.Update 4.Delete 5.Exit");
+            int ch = sc.nextInt();
+            if (ch == 1) {
+                System.out.println("Enter ID, Name, Dept, Marks:");
+                int id = sc.nextInt(); sc.nextLine();
+                String name = sc.nextLine();
+                String dept = sc.nextLine();
+                double marks = sc.nextDouble();
+                ctrl.insert(new Student(id, name, dept, marks));
+            }
+            else if (ch == 2) {
+                List<Student> list = ctrl.readAll();
+                for (Student s : list)
+                    System.out.println(s.id + " " + s.name + " " + s.dept + " " + s.marks);
+            }
+            else if (ch == 3) {
+                System.out.println("Enter ID to update:");
+                int id = sc.nextInt(); sc.nextLine();
+                System.out.println("Enter Name, Dept, Marks:");
+                String name = sc.nextLine();
+                String dept = sc.nextLine();
+                double marks = sc.nextDouble();
+                ctrl.update(new Student(id, name, dept, marks));
+            }
+            else if (ch == 4) {
+                System.out.println("Enter ID to delete:");
+                int id = sc.nextInt();
+                ctrl.delete(id);
+            }
+            else if (ch == 5) {
+                ctrl.close(); break;
+            }
+        }
+        sc.close();
+    }
+}
